@@ -567,14 +567,14 @@ class Pickup{
     else if(this.type==='regen'){fighter.regenTimer=360;spawnSparks(fighter.cx,fighter.cy-40,10,'#00ff88');impactTexts.push(new ImpactText(fighter.cx,fighter.cy-70,'💚 REGEN!','#00ff88'));}
     else if(this.type==='freeze_enemy'){
       const opp=fighter===player?aiFighter:player;
-      if(opp){opp.frozenTimer=200;spawnSparks(opp.cx,opp.cy-40,12,'#aaeeff');impactTexts.push(new ImpactText(opp.cx,opp.cy-70,'🧊 ÎNGHEȚAT!','#aaeeff'));doFlash('#aaeeff',.3);}
+      if(opp){opp.frozenTimer=90;spawnSparks(opp.cx,opp.cy-40,12,'#aaeeff');impactTexts.push(new ImpactText(opp.cx,opp.cy-70,'🧊 ÎNGHEȚAT! 1.5s','#aaeeff'));doFlash('#aaeeff',.35);}
       spawnSparks(fighter.cx,fighter.cy-40,8,'#aaeeff');
     }
     else if(this.type==='sword'){fighter.weaponType='sword';fighter.weaponTimer=360;spawnSparks(fighter.cx,fighter.cy-40,10,'#ff8800');impactTexts.push(new ImpactText(fighter.cx,fighter.cy-70,'SABIE!','#ff8800'));}
     else if(this.type==='hammer'){fighter.weaponType='hammer';fighter.weaponTimer=300;spawnSparks(fighter.cx,fighter.cy-40,10,'#cc8844');impactTexts.push(new ImpactText(fighter.cx,fighter.cy-70,'CIOCAN!','#cc8844'));}
     else if(this.type==='excalibur'){fighter.weaponType='excalibur';fighter.weaponTimer=480;doFlash('#ffd700',.4);spawnSparks(fighter.cx,fighter.cy-40,18,'#ffd700');spawnStars(fighter.cx,fighter.cy-40,10);impactTexts.push(new ImpactText(fighter.cx,fighter.cy-70,'✨ EXCALIBUR!','#ffd700'));}
     else if(this.type==='mjolnir'){fighter.weaponType='mjolnir';fighter.weaponTimer=360;doFlash('#4488ff',.4);spawnSparks(fighter.cx,fighter.cy-40,18,'#66aaff');impactTexts.push(new ImpactText(fighter.cx,fighter.cy-70,'⚡ MJÖLNIR!','#66aaff'));}
-    else if(this.type==='trap_fire'){const fd=Math.round(fighter.maxHP*0.55);fighter.takeDamage(fd,'trap');fighter.frozenTimer=70;doFlash('#ff4400',.5);impactTexts.push(new ImpactText(fighter.cx,fighter.cy-70,'🔥 -'+fd+'!','#ff4400'));}
+    else if(this.type==='trap_fire'){const fd=Math.round(fighter.maxHP*0.55);fighter.takeDamage(fd,'trap');fighter.frozenTimer=45;doFlash('#ff4400',.5);impactTexts.push(new ImpactText(fighter.cx,fighter.cy-70,'🔥 -'+fd+'!','#ff4400'));}
     else if(this.type==='trap_spike'){const sd=Math.round(fighter.maxHP*0.68);fighter.takeDamage(sd,'trap');doFlash('#ffffff',.45);impactTexts.push(new ImpactText(fighter.cx,fighter.cy-70,'⚠ -'+sd+'!','#cccccc'));}
     else if(this.type==='trap_bomb'){
       // massive explosion — hits both fighters if close enough
@@ -805,6 +805,14 @@ class Fighter{
       ctx.restore();
     }
 
+    // frozen indicator
+    if(this.frozenTimer>0){
+      const fp=0.6+Math.sin(this.tick*.3)*.4;
+      ctx.save();ctx.globalAlpha=fp;ctx.font='bold 16px Arial Black';ctx.textAlign='center';
+      ctx.strokeStyle='#003366';ctx.lineWidth=4;ctx.strokeText('🧊 ÎNGHEȚAT',this.cx,this.cy-95);
+      ctx.fillStyle='#aaeeff';ctx.fillText('🧊 ÎNGHEȚAT',this.cx,this.cy-95);
+      ctx.restore();
+    }
     // spell label
     if(this.spellLabelTimer>0){
       const p=this.spellLabelTimer/45;ctx.save();ctx.globalAlpha=Math.min(1,p*2);
@@ -1507,10 +1515,13 @@ class AICtrl{
       }
     }
     if(f.stateTimer>4)return;
-    const react=Math.max(2,26-lvl*.45),speed=(3.2+lvl*.12)*f.speedMult;
-    const aggro=0.35+lvl/50*.65,blkChance=Math.min(.8,.2+lvl/50),comboChance=Math.min(.9,.35+lvl/55);
+    const react=Math.max(1,18-lvl*.35),speed=(3.2+lvl*.12)*f.speedMult;
+    // AI gets more aggressive if player has a powerful weapon (try to punish)
+    const playerHasSuperWpn=p.weaponType==='excalibur'||p.weaponType==='mjolnir'||p.berserkerTimer>0;
+    const aggro=Math.min(0.95,(0.45+lvl/50*.55)+(playerHasSuperWpn?.15:0));
+    const blkChance=Math.min(.85,.25+lvl/50),comboChance=Math.min(.9,.35+lvl/55);
     this.thinkTimer--;if(this.thinkTimer>0)return;
-    this.thinkTimer=Math.floor(react+Math.random()*6);
+    this.thinkTimer=Math.max(1,Math.floor(react+Math.random()*4));
     const dist=Math.abs(f.cx-p.cx),pAtk=p.state==='punch'||p.state==='kick';
     const incoming=projectiles.find(pr=>pr.owner==='player'&&pr.active&&Math.sign(pr.vx)===Math.sign(f.cx-pr.x));
     if(incoming&&f.mana>=SPELLS.lightning.cost){const pr=f.tryMagic('lightning');if(pr){projectiles.push(pr);return;}}
