@@ -65,7 +65,7 @@
   <span>← →</span> Mișcare &nbsp;|&nbsp; <span>↑</span> Săritură &nbsp;|&nbsp;
   <span>A</span> Pumn &nbsp;|&nbsp; <span>S</span> Picior &nbsp;|&nbsp; <span>D</span> Apărare &nbsp;|&nbsp;
   <span class="q">Q</span> Hadouken &nbsp;|&nbsp; <span class="e">E</span> Fulger &nbsp;|&nbsp;
-  <span class="r">R</span> Inferno
+  <span class="r">R</span> Inferno &nbsp;|&nbsp; <span>Spațiu</span> Ia Arma
 </div>
 
 <script>
@@ -447,6 +447,16 @@ class Pickup{
       ctx.globalAlpha=alpha*.9;ctx.font='bold 10px Arial Black';ctx.textAlign='center';
       ctx.strokeStyle=OUTLINE;ctx.lineWidth=3;ctx.strokeText(this.label,x,y-27+bob);
       ctx.fillStyle=this.col;ctx.fillText(this.label,x,y-27+bob);
+    }
+    // weapon pickup hint: "SPAȚIU" when player nearby
+    if(this.cat==='wpn'&&typeof player!=='undefined'&&player){
+      const dx=Math.abs(this.x-player.cx),dy=Math.abs(this.y-player.y);
+      if(dx<55&&dy<40){
+        const p2=0.6+Math.sin(this.age*.25)*.4;
+        ctx.globalAlpha=alpha*p2;ctx.font='bold 11px Arial Black';ctx.textAlign='center';
+        ctx.strokeStyle='#000';ctx.lineWidth=3.5;ctx.strokeText('[ SPAȚIU ]',x,y-40+bob);
+        ctx.fillStyle='#ffffff';ctx.fillText('[ SPAȚIU ]',x,y-40+bob);
+      }
     }
     ctx.restore();
   }
@@ -1429,6 +1439,12 @@ function loop(){
     if(ep&&!(prevK['e']||prevK['E'])){const pr=player.tryMagic('lightning');if(pr)projectiles.push(pr);}
     if(rp&&!(prevK['r']||prevK['R'])){const pr=player.tryMagic('inferno');if(pr)projectiles.push(pr);}
     if(keys['d']||keys['D'])player.state='block';else if(player.state==='block')player.state='idle';
+    // Space: pick up nearby weapon
+    if(keys[' ']&&!prevK[' ']){
+      for(const pk of pickups){
+        if(pk.active&&pk.cat==='wpn'&&pk.touch(player)){pk.applyEffect(player);break;}
+      }
+    }
   }
   Object.assign(prevK,keys);
 
@@ -1478,8 +1494,14 @@ function loop(){
     const pk=pickups[i];
     if(!pk.active){pickups.splice(i,1);continue;}
     pk.update();
-    if(pk.touch(player))pk.applyEffect(player);
-    else if(pk.touch(aiFighter))pk.applyEffect(aiFighter);
+    // weapons require Space (player) or auto for AI; traps+acc auto for both
+    if(pk.cat!=='wpn'){
+      if(pk.touch(player))pk.applyEffect(player);
+      else if(pk.touch(aiFighter))pk.applyEffect(aiFighter);
+    } else {
+      // weapons: auto for AI only
+      if(pk.touch(aiFighter))pk.applyEffect(aiFighter);
+    }
     if(pk.active)pk.draw();
   }
 
