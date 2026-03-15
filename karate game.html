@@ -618,12 +618,18 @@ class Fighter{
   isBlocking(){return this.state==='block';}
   get speedMult(){return this.speedBoost>0?1.8:1;}
   get dmgMult(){
-    if(this.berserkerTimer>0)return 5;
-    if(this.weaponType==='mjolnir')return 9;
-    if(this.weaponType==='excalibur')return 7;
-    if(this.weaponType==='hammer')return 3.5;
-    if(this.weaponType==='sword')return 2.5;
-    return 1;
+    const bm=this.berserkerTimer>0?2:1; // berserk doubles any weapon
+    if(this.weaponType==='mjolnir')return 9*bm;
+    if(this.weaponType==='excalibur')return 7*bm;
+    if(this.weaponType==='hammer')return 3.5*bm;
+    if(this.weaponType==='sword')return 2.5*bm;
+    return this.berserkerTimer>0?5:1;
+  }
+  get atkRange(){
+    if(this.weaponType==='excalibur')return 135;
+    if(this.weaponType==='mjolnir')return 145;
+    if(this.weaponType==='hammer')return 125;
+    return 0; // use default
   }
 
   takeDamage(dmg,type){
@@ -641,16 +647,27 @@ class Fighter{
   tryPunch(t){
     if(this.atkCooldown>0)return;
     this.state='punch';this.stateTimer=22;this.atkCooldown=32;
-    if(Math.abs(this.cx-t.cx)<95&&this.facing===Math.sign(t.cx-this.cx)){
-      const d=Math.round((7+rand(5))*this.dmgMult); t.takeDamage(d); spawnDust(t.cx,t.cy,4);
+    const range=this.atkRange||95;
+    if(Math.abs(this.cx-t.cx)<range&&this.facing===Math.sign(t.cx-this.cx)){
+      const d=Math.round((7+rand(5))*this.dmgMult); t.takeDamage(d);
+      spawnDust(t.cx,t.cy,4);
+      this._weaponHitFx(t);
     }
   }
   tryKick(t){
     if(this.atkCooldown>0)return;
     this.state='kick';this.stateTimer=28;this.atkCooldown=42;
-    if(Math.abs(this.cx-t.cx)<115&&this.facing===Math.sign(t.cx-this.cx)){
-      const d=Math.round((11+rand(9))*this.dmgMult); t.takeDamage(d); spawnDust(t.cx,t.cy,5);
+    const range=this.atkRange||115;
+    if(Math.abs(this.cx-t.cx)<range&&this.facing===Math.sign(t.cx-this.cx)){
+      const d=Math.round((11+rand(9))*this.dmgMult); t.takeDamage(d);
+      spawnDust(t.cx,t.cy,5);
+      this._weaponHitFx(t);
     }
+  }
+  _weaponHitFx(t){
+    if(this.weaponType==='excalibur'){doFlash('#ffd700',.4);spawnStars(t.cx,t.cy-40,10);spawnSparks(t.cx,t.cy-40,14,'#ffd700');}
+    else if(this.weaponType==='mjolnir'){doFlash('#4488ff',.4);doShake(18);spawnSparks(t.cx,t.cy-40,16,'#66aaff');spawnSparks(t.cx,t.cy-40,8,'#ffffff');}
+    else if(this.berserkerTimer>0){spawnSparks(t.cx,t.cy-40,10,'#ff3300');}
   }
   tryJump(){
     if(this.onGround){this.vy=-14;this.onGround=false;this.state='jump';
@@ -1543,6 +1560,56 @@ function drawTorches(){
 }
 
 // ══════════════════════════════════════════════════════
+//  POWER HUD (canvas overlay)
+// ══════════════════════════════════════════════════════
+function drawPowerHUD(){
+  if(!player)return;
+  const badges=[];
+  // weapon
+  const wpnInfo={
+    sword:     {icon:'⚔',name:'SABIE',   col:'#ff8800',mult:'×2.5'},
+    hammer:    {icon:'🔨',name:'CIOCAN',  col:'#cc8844',mult:'×3.5'},
+    excalibur: {icon:'✨',name:'EXCALIBUR',col:'#ffd700',mult:'×7'},
+    mjolnir:   {icon:'⚡',name:'MJÖLNIR', col:'#66aaff',mult:'×9'}
+  };
+  if(player.weaponType!=='none'&&wpnInfo[player.weaponType]){
+    const w=wpnInfo[player.weaponType];
+    const bm=player.berserkerTimer>0?2:1;
+    const realMult=player.dmgMult;
+    badges.push({icon:w.icon,text:w.name+' '+w.mult+(bm>1?'×2':'')+'  A/S=ATAC',col:w.col,timer:player.weaponTimer,maxT:480});
+  }
+  // super powers
+  if(player.berserkerTimer>0)badges.push({icon:'💀',text:'BERSERK  A/S=ATAC',col:'#ff2200',timer:player.berserkerTimer,maxT:300});
+  if(player.regenTimer>0)    badges.push({icon:'💚',text:'REGEN activ',col:'#00ff88',timer:player.regenTimer,maxT:360});
+  if(player.shieldTimer>0)   badges.push({icon:'🛡',text:'SCUT activ',col:'#00eeff',timer:player.shieldTimer,maxT:180});
+  if(player.speedBoost>0)    badges.push({icon:'⚡',text:'VITEZĂ ×1.8',col:'#ffee00',timer:player.speedBoost,maxT:300});
+
+  if(badges.length===0)return;
+  const bh=22, gap=6, py=H-30;
+  let px=10;
+  ctx.save();
+  badges.forEach(b=>{
+    const tw=ctx.measureText(b.text).width+60;
+    // background
+    ctx.fillStyle='rgba(0,0,0,.55)';
+    ctx.beginPath();ctx.roundRect(px,py,tw,bh,5);ctx.fill();
+    // timer bar
+    const barW=(tw-4)*(b.timer/b.maxT);
+    ctx.fillStyle=b.col+'66';
+    ctx.beginPath();ctx.roundRect(px+2,py+bh-5,barW,4,2);ctx.fill();
+    // icon + text
+    ctx.font='bold 12px Arial Black';ctx.textAlign='left';
+    ctx.fillStyle='rgba(255,255,255,.9)';
+    ctx.strokeStyle='#000';ctx.lineWidth=3;
+    ctx.strokeText(b.icon+' '+b.text,px+6,py+15);
+    ctx.fillStyle=b.col;
+    ctx.fillText(b.icon+' '+b.text,px+6,py+15);
+    px+=tw+gap;
+  });
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════════════
 //  HUD
 // ══════════════════════════════════════════════════════
 function updateHUD(){
@@ -1676,6 +1743,9 @@ function loop(){
   for(let i=impactTexts.length-1;i>=0;i--){if(!impactTexts[i].update())impactTexts.splice(i,1);else impactTexts[i].draw();}
 
   ctx.restore(); // end shake
+
+  // ── Power/Weapon status bar (bottom of canvas) ──
+  drawPowerHUD();
 
   updateHUD();
   if(player.health<=0){
