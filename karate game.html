@@ -65,7 +65,7 @@
   <span>← →</span> Mișcare &nbsp;|&nbsp; <span>↑</span> Săritură &nbsp;|&nbsp;
   <span>A</span> Pumn &nbsp;|&nbsp; <span>S</span> Picior &nbsp;|&nbsp; <span>D</span> Apărare &nbsp;|&nbsp;
   <span class="q">Q</span> Hadouken &nbsp;|&nbsp; <span class="e">E</span> Fulger &nbsp;|&nbsp;
-  <span class="r">R</span> Inferno &nbsp;|&nbsp; <span>Spațiu</span> Ia Arma &nbsp;|&nbsp; <span style="color:#ff8800">F</span> Aruncă Bombă
+  <span class="r">R</span> Inferno &nbsp;|&nbsp; <span>Spațiu</span> Ia Arma &nbsp;|&nbsp; <span style="color:#ff8800">F</span> Bombă &nbsp;|&nbsp; <span style="color:#ff2200">1+1</span> Țintă Mortală
 </div>
 
 <script>
@@ -1662,6 +1662,14 @@ function drawPowerHUD(){
   if(player.shieldTimer>0)   badges.push({icon:'🛡',text:'SCUT activ',col:'#00eeff',timer:player.shieldTimer,maxT:180});
   if(player.speedBoost>0)    badges.push({icon:'⚡',text:'VITEZĂ ×1.8',col:'#ffee00',timer:player.speedBoost,maxT:300});
 
+  // target-lock badge
+  if(targetState===1){
+    badges.push({icon:'🎯',text:'APASĂ 1 DIN NOU!',col:'#ff2200',timer:targetTimer,maxT:TARGET_DURATION});
+  } else if(targetCooldown>0){
+    badges.push({icon:'🎯',text:'ȚINTĂ  '+Math.ceil(targetCooldown/60)+'s',col:'#884400',timer:TARGET_COOLDOWN-targetCooldown,maxT:TARGET_COOLDOWN});
+  } else {
+    badges.push({icon:'🎯',text:'ȚINTĂ  1=MARCHEAZĂ',col:'#cc4400',timer:1,maxT:1});
+  }
   // bomb stock badge (always shown during game)
   {
     const bLabel='💣 ×'+bombStock+(bombCooldown>0?' ('+Math.ceil(bombCooldown/60)+'s)':'  F=ARUNCĂ');
@@ -1715,6 +1723,12 @@ let level=1,gameOn=false,rafId=0;
 let player,aiFighter,aiCtrl,projectiles=[];
 const pickups=[];let pickupTimer=0;
 const bombs=[];let bombStock=5;let bombCooldown=0;
+// Target-lock mechanic (key 1 x2)
+let targetState=0;   // 0=idle 1=targeting
+let targetTimer=0;   // countdown for targeting phase
+let targetCooldown=0;// cooldown after use
+const TARGET_DURATION=210; // ~3.5s to press 1 again
+const TARGET_COOLDOWN=540; // 9s cooldown
 
 function showMsg(t,c='#ffd700'){const el=document.getElementById('msgOverlay');el.textContent=t;el.style.color=c;el.style.textShadow=`0 4px 0 ${darken(c,60)}, 0 0 30px ${c}`;el.style.display='block';}
 function hideMsg(){document.getElementById('msgOverlay').style.display='none';}
@@ -1754,6 +1768,29 @@ function loop(){
     if(ep&&!(prevK['e']||prevK['E'])){const pr=player.tryMagic('lightning');if(pr)projectiles.push(pr);}
     if(rp&&!(prevK['r']||prevK['R'])){const pr=player.tryMagic('inferno');if(pr)projectiles.push(pr);}
     if(keys['d']||keys['D'])player.state='block';else if(player.state==='block')player.state='idle';
+    // 1: target-lock (press once to mark, press again to strike)
+    if(keys['1']&&!prevK['1']){
+      if(targetState===0&&targetCooldown===0){
+        // First press: mark enemy
+        targetState=1; targetTimer=TARGET_DURATION;
+        aiFighter.frozenTimer=TARGET_DURATION+20;
+        player.state='magic'; player.stateTimer=8;
+        spawnSparks(aiFighter.cx,aiFighter.cy-40,10,'#ff0000');
+        impactTexts.push(new ImpactText(aiFighter.cx,aiFighter.cy-90,'🎯 MARCAT!','#ff2200'));
+      } else if(targetState===1){
+        // Second press: execute devastating strike
+        targetState=0; targetTimer=0; targetCooldown=TARGET_COOLDOWN;
+        aiFighter.frozenTimer=0;
+        const dmg=Math.round(aiFighter.maxHP*0.92);
+        aiFighter.takeDamage(dmg,'magic');
+        doShake(45); doFlash('#ff0000',.85);
+        spawnStars(aiFighter.cx,aiFighter.cy-40,25);
+        spawnSparks(aiFighter.cx,aiFighter.cy-40,35,'#ff2200');
+        spawnSparks(aiFighter.cx,aiFighter.cy-40,20,'#ffd700');
+        impactTexts.push(new ImpactText(aiFighter.cx,aiFighter.cy-80,'💥 -'+dmg+'!!','#ff0000'));
+        addClash(aiFighter.cx,aiFighter.cy-40);
+      }
+    }
     // F: throw bomb
     const fp=keys['f']||keys['F'];
     if(fp&&!(prevK['f']||prevK['F'])&&bombStock>0&&bombCooldown===0){
@@ -1771,6 +1808,8 @@ function loop(){
   Object.assign(prevK,keys);
 
   if(bombCooldown>0)bombCooldown--;
+  if(targetCooldown>0)targetCooldown--;
+  if(targetTimer>0){targetTimer--;if(targetTimer===0){targetState=0;aiFighter.frozenTimer=0;}}
   player.update(aiFighter);
   aiFighter.update(player);
   aiCtrl.update(projectiles);
@@ -1828,6 +1867,49 @@ function loop(){
     if(pk.active)pk.draw();
   }
 
+  // ── Target-lock visual ──
+  if(targetState===1){
+    const prog=targetTimer/TARGET_DURATION;
+    const pulse=0.6+Math.sin(Date.now()*.012)*.4;
+    const ex=aiFighter.cx, ey=aiFighter.cy-50;
+    ctx.save();
+    // dashed line from player to enemy
+    ctx.globalAlpha=pulse*.8;
+    ctx.strokeStyle='#ff2200';ctx.lineWidth=2.5;
+    ctx.setLineDash([10,5]);ctx.lineDashOffset=-Date.now()*.08;
+    ctx.beginPath();ctx.moveTo(player.cx,player.cy-50);ctx.lineTo(ex,ey);ctx.stroke();
+    ctx.setLineDash([]);
+    // spinning crosshair on enemy
+    const cr=36+Math.sin(Date.now()*.008)*6;
+    const ang=Date.now()*.004;
+    ctx.globalAlpha=pulse;
+    [[cr,'#ff2200',3],[cr*.75,'#ffd700',2]].forEach(([r,c,lw])=>{
+      ctx.strokeStyle=c;ctx.lineWidth=lw;
+      // four arcs
+      for(let i=0;i<4;i++){
+        const a=ang+i*Math.PI/2;
+        ctx.beginPath();ctx.arc(ex,ey,r,a+.2,a+Math.PI/2-.2);ctx.stroke();
+      }
+      // corner ticks
+      for(let i=0;i<4;i++){
+        const a=ang+i*Math.PI/2+Math.PI/4;
+        ctx.beginPath();ctx.moveTo(ex+Math.cos(a)*r*.7,ey+Math.sin(a)*r*.7);
+        ctx.lineTo(ex+Math.cos(a)*r,ey+Math.sin(a)*r);ctx.stroke();
+      }
+    });
+    // center dot
+    ctx.fillStyle='#ff2200';ctx.beginPath();ctx.arc(ex,ey,5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(ex,ey,2.5,0,Math.PI*2);ctx.fill();
+    // timer arc (shrinking circle shows time left)
+    ctx.globalAlpha=.5;ctx.strokeStyle='#ff8800';ctx.lineWidth=4;
+    ctx.beginPath();ctx.arc(ex,ey,cr+12,-Math.PI/2,-Math.PI/2+Math.PI*2*prog,false);ctx.stroke();
+    // "APASĂ 1" prompt
+    ctx.globalAlpha=pulse;ctx.font='bold 14px Arial Black';ctx.textAlign='center';
+    ctx.strokeStyle='#000';ctx.lineWidth=4;ctx.strokeText('APASĂ 1 !',ex,ey-cr-22);
+    ctx.fillStyle='#ffd700';ctx.fillText('APASĂ 1 !',ex,ey-cr-22);
+    ctx.restore();
+  }
+
   // thrown bombs
   for(let i=bombs.length-1;i>=0;i--){
     bombs[i].update();
@@ -1880,6 +1962,7 @@ function startGame(){
   projectiles=[];clashEffects=[];particles.length=0;impactTexts.length=0;shake=0;flashAlpha=0;
   pickups.length=0;pickupTimer=0;
   bombs.length=0;bombStock=5;bombCooldown=0;
+  targetState=0;targetTimer=0;targetCooldown=0;
   player=new Fighter(100,false);
   aiFighter=new Fighter(660,true);
   aiFighter.maxHP=Math.round((80+level*1.4)*currentEnemy.hpMult);aiFighter.health=aiFighter.maxHP;
