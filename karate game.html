@@ -91,32 +91,21 @@ const keys={},prevK={};
 window.addEventListener('keydown',e=>{keys[e.key]=true; e.preventDefault();});
 window.addEventListener('keyup',  e=>{keys[e.key]=false;});
 
-// ── Mouse / Click-to-Kill ──
+// ── Mouse aim + Space to execute ──
 let mouseX=0,mouseY=0,clickCooldown=0;
-let clickKillFx=null; // {x1,y1,x2,y2,t,maxT} laser beam effect
+let isAiming=false;           // ține apăsat mouse = vizare activă
+let enemyMarked=false,markTimer=0;
+let clickKillFx=null;
 canvas.addEventListener('mousemove',e=>{
   const r=canvas.getBoundingClientRect();
   mouseX=e.clientX-r.left; mouseY=e.clientY-r.top;
 });
-canvas.addEventListener('click',e=>{
-  if(!gameOn||clickCooldown>0)return;
-  const r=canvas.getBoundingClientRect();
-  const cx=e.clientX-r.left, cy=e.clientY-r.top;
-  // check if click hits enemy hitbox
-  if(aiFighter&&Math.abs(cx-aiFighter.cx)<42&&cy>aiFighter.y-110&&cy<aiFighter.y+8){
-    clickCooldown=240; // 4s
-    const dmg=Math.round(aiFighter.maxHP*0.95);
-    aiFighter.takeDamage(dmg,'magic');
-    // laser beam effect from player to enemy
-    clickKillFx={x1:player.cx,y1:player.cy-50,x2:aiFighter.cx,y2:aiFighter.cy-50,t:40,maxT:40};
-    doShake(40); doFlash('#ff0000',.8);
-    spawnStars(aiFighter.cx,aiFighter.cy-40,25);
-    spawnSparks(aiFighter.cx,aiFighter.cy-40,35,'#ff0000');
-    spawnSparks(aiFighter.cx,aiFighter.cy-40,20,'#ffee00');
-    impactTexts.push(new ImpactText(aiFighter.cx,aiFighter.cy-80,'☠ -'+dmg+'!!','#ff0000'));
-    addClash(aiFighter.cx,aiFighter.cy-40);
-  }
+canvas.addEventListener('mousedown',e=>{
+  if(!gameOn)return;
+  isAiming=true;
 });
+canvas.addEventListener('mouseup',e=>{ isAiming=false; });
+canvas.addEventListener('mouseleave',e=>{ isAiming=false; });
 
 // ══════════════════════════════════════════════════════
 //  HELPERS
@@ -1825,10 +1814,28 @@ function loop(){
       bombs.push(new ThrownBomb(player.cx+player.facing*10,player.cy-50,player.facing));
       spawnSparks(player.cx,player.cy-50,5,'#ff8800');
     }
-    // Space: pick up nearby weapon
+    // Space: dacă vizezi inamicul cu linia → MOARTE INSTANTANEE; altfel ia arma
     if(keys[' ']&&!prevK[' ']){
-      for(const pk of pickups){
-        if(pk.active&&pk.cat==='wpn'&&pk.touch(player)){pk.applyEffect(player);break;}
+      const lineOnEnemy=isAiming&&aiFighter&&clickCooldown===0
+        &&Math.abs(mouseX-aiFighter.cx)<85
+        &&mouseY>aiFighter.y-130&&mouseY<aiFighter.y+20;
+      if(lineOnEnemy){
+        // 💣 BOMBĂ PE LINIE → UCIDE INSTANT
+        isAiming=false; clickCooldown=300;
+        const dmg=aiFighter.maxHP; // 100% HP = moarte sigură
+        aiFighter.takeDamage(dmg,'magic');
+        clickKillFx={x1:player.cx,y1:player.cy-50,x2:aiFighter.cx,y2:aiFighter.cy-60,t:60,maxT:60};
+        doShake(50); doFlash('#ff0000',.95);
+        spawnStars(aiFighter.cx,aiFighter.cy-40,35);
+        spawnSparks(aiFighter.cx,aiFighter.cy-40,45,'#ff0000');
+        spawnSparks(aiFighter.cx,aiFighter.cy-40,28,'#ffee00');
+        spawnSparks(aiFighter.cx,aiFighter.cy-20,20,'#ff8800');
+        impactTexts.push(new ImpactText(aiFighter.cx,aiFighter.cy-90,'☠ MORT INSTANT!!','#ff0000'));
+        addClash(aiFighter.cx,aiFighter.cy-40);
+      } else {
+        for(const pk of pickups){
+          if(pk.active&&pk.cat==='wpn'&&pk.touch(player)){pk.applyEffect(player);break;}
+        }
       }
     }
   }
@@ -1837,6 +1844,7 @@ function loop(){
   if(bombCooldown>0)bombCooldown--;
   if(targetCooldown>0)targetCooldown--;
   if(clickCooldown>0)clickCooldown--;
+  if(markTimer>0){markTimer--;if(markTimer===0)enemyMarked=false;}
   if(targetTimer>0){targetTimer--;if(targetTimer===0){targetState=0;aiFighter.frozenTimer=0;}}
   player.update(aiFighter);
   aiFighter.update(player);
@@ -1969,6 +1977,44 @@ function loop(){
 
   ctx.restore(); // end shake
 
+  // ── Linie de vizare (mouse apăsat) ──
+  if(isAiming&&gameOn&&player){
+    const onEnemy=aiFighter&&Math.abs(mouseX-aiFighter.cx)<85&&mouseY>aiFighter.y-130&&mouseY<aiFighter.y+20;
+    const ready=clickCooldown===0;
+    const t=Date.now()*.01;
+    ctx.save();
+    // linia pulsantă de foc
+    ctx.setLineDash([16,7]);
+    ctx.lineDashOffset=-t*15;
+    ctx.strokeStyle=onEnemy&&ready?'#ff0000':'#ff7700';
+    ctx.lineWidth=onEnemy&&ready?4:3;
+    ctx.globalAlpha=.82+Math.sin(t*2)*.18;
+    ctx.shadowColor=onEnemy&&ready?'#ff0000':'#ff8800';
+    ctx.shadowBlur=onEnemy&&ready?18:10;
+    ctx.beginPath();
+    ctx.moveTo(player.cx, player.cy-50);
+    ctx.lineTo(mouseX, mouseY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // glob luminos la capăt
+    ctx.globalAlpha=1;
+    ctx.fillStyle=onEnemy&&ready?'#ff0000':'#ffaa00';
+    ctx.shadowBlur=onEnemy&&ready?25:15;
+    ctx.beginPath();
+    ctx.arc(mouseX,mouseY,onEnemy&&ready?11:7,0,Math.PI*2);
+    ctx.fill();
+    // text hint când linia e pe inamic
+    if(onEnemy&&ready){
+      ctx.shadowBlur=0;
+      ctx.globalAlpha=.9+Math.sin(t*4)*.1;
+      ctx.fillStyle='#ff2200';
+      ctx.font='bold 14px Arial Black';
+      ctx.textAlign='center';
+      ctx.fillText('☠ SPACE = UCIDE!',mouseX,mouseY-22);
+    }
+    ctx.restore();
+  }
+
   // ── Custom crosshair cursor ──
   if(mouseX>0||mouseY>0){
     const ready=clickCooldown===0;
@@ -2034,7 +2080,7 @@ function startGame(){
   pickups.length=0;pickupTimer=0;
   bombs.length=0;bombStock=5;bombCooldown=0;
   targetState=0;targetTimer=0;targetCooldown=0;
-  clickCooldown=0;clickKillFx=null;
+  clickCooldown=0;clickKillFx=null;enemyMarked=false;markTimer=0;isAiming=false;
   player=new Fighter(100,false);
   aiFighter=new Fighter(660,true);
   aiFighter.maxHP=Math.round((80+level*1.4)*currentEnemy.hpMult);aiFighter.health=aiFighter.maxHP;
