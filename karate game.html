@@ -76,12 +76,12 @@ const canvas=document.getElementById('gameCanvas');
 const ctx=canvas.getContext('2d');
 const W=canvas.width,H=canvas.height;
 const GROUND=310, GRAVITY=0.55;
-const MANA_MAX=100, MANA_REGEN=0.28;
+const MANA_MAX=100, MANA_REGEN=0.5;
 
 const SPELLS={
-  hadouken: {cost:28,dmgBase:22,dmgRand:10,speed:7,  col:'#ff8800',glow:'#ffdd88',label:'HADOUKEN!'},
-  lightning:{cost:18,dmgBase:14,dmgRand:8, speed:15,  col:'#ffee00',glow:'#ffffff',label:'ZAP!!'},
-  inferno:  {cost:46,dmgBase:34,dmgRand:12,speed:3.5, col:'#ff2200',glow:'#ff9900',label:'KA-BOOM!'}
+  hadouken: {cost:22,dmgBase:30,dmgRand:12,speed:7,  col:'#ff8800',glow:'#ffdd88',label:'HADOUKEN!'},
+  lightning:{cost:14,dmgBase:20,dmgRand:10,speed:15, col:'#ffee00',glow:'#ffffff',label:'ZAP!!'},
+  inferno:  {cost:38,dmgBase:46,dmgRand:14,speed:3.5,col:'#ff2200',glow:'#ff9900',label:'KA-BOOM!'}
 };
 
 // ══════════════════════════════════════════════════════
@@ -732,7 +732,7 @@ class Fighter{
     this.state='punch';this.stateTimer=22;this.atkCooldown=32;
     const range=this.atkRange||95;
     if(Math.abs(this.cx-t.cx)<range&&this.facing===Math.sign(t.cx-this.cx)){
-      const d=Math.round((7+rand(5))*this.dmgMult); t.takeDamage(d);
+      const d=Math.round((14+rand(9))*this.dmgMult); t.takeDamage(d);
       spawnDust(t.cx,t.cy,4);
       this._weaponHitFx(t);
     }
@@ -742,7 +742,7 @@ class Fighter{
     this.state='kick';this.stateTimer=28;this.atkCooldown=42;
     const range=this.atkRange||115;
     if(Math.abs(this.cx-t.cx)<range&&this.facing===Math.sign(t.cx-this.cx)){
-      const d=Math.round((11+rand(9))*this.dmgMult); t.takeDamage(d);
+      const d=Math.round((20+rand(12))*this.dmgMult); t.takeDamage(d);
       spawnDust(t.cx,t.cy,5);
       this._weaponHitFx(t);
     }
@@ -1588,7 +1588,7 @@ class AICtrl{
     // proactive magic
     this.magicTimer--;
     if(this.magicTimer<=0){
-      this.magicTimer=Math.max(16,55-lvl*.9);
+      this.magicTimer=Math.max(30,80-lvl*.9);
       if(f.mana>=SPELLS.hadouken.cost&&f.stateTimer<6){
         const dist=Math.abs(f.cx-p.cx);
         let type='hadouken';
@@ -1598,7 +1598,7 @@ class AICtrl{
       }
     }
     if(f.stateTimer>4)return;
-    const react=Math.max(1,18-lvl*.35),speed=(3.2+lvl*.12)*f.speedMult;
+    const react=Math.max(3,26-lvl*.35),speed=(2.2+lvl*.08)*f.speedMult;
     // AI gets more aggressive if player has a powerful weapon (try to punish)
     const playerHasSuperWpn=p.weaponType==='excalibur'||p.weaponType==='mjolnir'||p.berserkerTimer>0;
     const aggro=Math.min(0.95,(0.45+lvl/50*.55)+(playerHasSuperWpn?.15:0));
@@ -2083,7 +2083,7 @@ function startGame(){
   clickCooldown=0;clickKillFx=null;enemyMarked=false;markTimer=0;isAiming=false;
   player=new Fighter(100,false);
   aiFighter=new Fighter(660,true);
-  aiFighter.maxHP=Math.round((80+level*1.4)*currentEnemy.hpMult);aiFighter.health=aiFighter.maxHP;
+  aiFighter.maxHP=Math.round((60+level*1.0)*currentEnemy.hpMult);aiFighter.health=aiFighter.maxHP;
   aiCtrl=new AICtrl(aiFighter,player);
   gameOn=true;requestAnimationFrame(loop);
 }
