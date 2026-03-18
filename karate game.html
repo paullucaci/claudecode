@@ -64,6 +64,36 @@
     .sItem .sBdg { position:absolute; top:5px; right:6px; font-size:10px; color:#ffd700; }
     .sItem.sOwned .sPr { color:#00dd88; }
     #shopMsg { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.85); border:2px solid #ffd700; border-radius:12px; padding:10px 28px; font-size:16px; font-weight:bold; color:#ffd700; display:none; z-index:1001; letter-spacing:1px; pointer-events:none; }
+    /* ══ PLANETĂ ══ */
+    #planetBtn{background:linear-gradient(135deg,#001133,#003399);color:#88ccff;border:2px solid #0055cc;border-radius:12px;padding:8px 20px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 3px 0 #001166;transition:transform .08s,box-shadow .08s;letter-spacing:.5px;}
+    #planetBtn:hover{transform:translateY(-2px);background:linear-gradient(135deg,#002266,#0066ff);}
+    #planetOverlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 50% 40%,#04001a 0%,#000008 100%);z-index:998;flex-direction:column;align-items:center;overflow:hidden;}
+    #planetOverlay.open{display:flex;}
+    #planetOverlay::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background-image:radial-gradient(1px 1px at 8% 15%,#fff,transparent),radial-gradient(1px 1px at 22% 72%,#aac,transparent),radial-gradient(1px 1px at 45% 30%,#fff,transparent),radial-gradient(1px 1px at 60% 85%,#aac,transparent),radial-gradient(1px 1px at 75% 18%,#fff,transparent),radial-gradient(1px 1px at 90% 55%,#fff,transparent),radial-gradient(1px 1px at 35% 92%,#aac,transparent),radial-gradient(1px 1px at 55% 60%,#fff,transparent),radial-gradient(2px 2px at 15% 50%,#fff6,transparent),radial-gradient(2px 2px at 80% 80%,#aaf6,transparent),radial-gradient(1px 1px at 5% 88%,#fff,transparent),radial-gradient(1px 1px at 95% 10%,#fff,transparent);pointer-events:none;opacity:.8;}
+    #planetHeader{width:100%;max-width:1020px;display:flex;justify-content:space-between;align-items:center;padding:14px 28px 10px;border-bottom:1px solid #0033aa44;flex-shrink:0;position:relative;z-index:1;}
+    #planetTitle{font-size:22px;color:#88ccff;letter-spacing:4px;text-shadow:0 0 20px #0055ff;}
+    #planetStats{font-size:14px;color:#ffd700;background:rgba(0,0,0,.4);padding:5px 14px;border-radius:20px;border:1px solid #443300;}
+    #closePlanetBtn{background:#08001a;border:2px solid #0055cc;color:#88ccff;border-radius:8px;padding:6px 18px;font-size:13px;cursor:pointer;font-weight:bold;transition:all .12s;}
+    #closePlanetBtn:hover{background:#0055cc;color:#fff;}
+    #planetContent{display:flex;flex:1;align-items:center;justify-content:center;gap:55px;padding:10px 20px;position:relative;z-index:1;}
+    #globeWrap{display:flex;flex-direction:column;align-items:center;gap:10px;}
+    #globeCanvas{border-radius:50%;cursor:grab;filter:drop-shadow(0 0 40px #0044ff88) drop-shadow(0 0 80px #0022aa44);}
+    #globeCanvas:active{cursor:grabbing;}
+    #globeHint{color:#334466;font-size:12px;letter-spacing:1px;text-align:center;}
+    #continentPanel{width:320px;background:rgba(0,8,25,.85);border:2px solid #0033aa66;border-radius:16px;padding:20px;max-height:480px;overflow-y:auto;flex-shrink:0;backdrop-filter:blur(4px);}
+    #continentPanel::-webkit-scrollbar{width:5px;}#continentPanel::-webkit-scrollbar-thumb{background:#0044aa;border-radius:3px;}
+    .pCountry{display:flex;align-items:center;gap:8px;padding:9px 10px;margin-bottom:7px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid #1a2233;transition:border-color .15s;}
+    .pCountry.pConq{border-color:#ffd70066;background:rgba(255,215,0,.07);}
+    .pFlag{font-size:22px;flex-shrink:0;}
+    .pInfo{flex:1;}
+    .pNm{font-size:13px;font-weight:bold;color:#ccc;}
+    .pLv{font-size:10px;color:#446;}
+    .fightBtn{background:linear-gradient(135deg,#770000,#cc1100);border:none;color:#fff;padding:5px 13px;border-radius:7px;cursor:pointer;font-size:11px;font-weight:bold;white-space:nowrap;transition:background .1s;}
+    .fightBtn:hover{background:linear-gradient(135deg,#aa0000,#ff2200);}
+    .pConqBadge{font-size:13px;color:#ffd700;white-space:nowrap;}
+    #contTitle{font-size:19px;font-weight:bold;color:#88ccff;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #0033aa55;}
+    #contAllConq{background:linear-gradient(135deg,#442200,#775500);border:2px solid #ffd700;border-radius:10px;padding:10px;text-align:center;margin-top:10px;font-size:14px;color:#ffd700;font-weight:bold;}
+    #globeNoSelect{color:#223355;font-size:14px;text-align:center;line-height:1.8;margin-top:30px;}
   </style>
 </head>
 <body>
@@ -71,6 +101,7 @@
 <div id="moneyRow">
   <div id="moneyDisplay">💰 <span id="coinCount">300</span> monede <span id="moneyFill"><span id="moneyFillBar" style="width:30%"></span></span></div>
   <button id="shopBtn">🛒 Cumpără din Magazin</button>
+  <button id="planetBtn">🌍 Planetă</button>
 </div>
 <div id="levelSelect">
   <label>Nivel (1–100):</label>
@@ -111,6 +142,23 @@
   <div id="shopGrid"></div>
 </div>
 <div id="shopMsg"></div>
+<!-- ══ PLANET OVERLAY ══ -->
+<div id="planetOverlay">
+  <div id="planetHeader">
+    <div id="planetTitle">🌍 WORLD TOUR — Cucerește Lumea!</div>
+    <div id="planetStats">🏆 0 / 31 țări cucerite</div>
+    <button id="closePlanetBtn">✕ Închide</button>
+  </div>
+  <div id="planetContent">
+    <div id="globeWrap">
+      <canvas id="globeCanvas" width="340" height="340"></canvas>
+      <div id="globeHint">🖱 Trage să rotești &nbsp;•&nbsp; Click pe continent</div>
+    </div>
+    <div id="continentPanel">
+      <div id="globeNoSelect">🌍 Dă click pe un continent<br>pentru a vedea țările<br>și a lupta!</div>
+    </div>
+  </div>
+</div>
 <div id="hint">
   <span>← →</span> Mișcare &nbsp;|&nbsp; <span>↑</span> Săritură &nbsp;|&nbsp;
   <span>A</span> Pumn &nbsp;|&nbsp; <span>S</span> Picior &nbsp;|&nbsp; <span>D</span> Apărare &nbsp;|&nbsp;
@@ -2166,6 +2214,15 @@ function loop(){
     gameOn=false;
     exciteCrowd(80);
     earnCoins();
+    // World Tour: marchează țara cucerită
+    if(worldFightCountryId){
+      conqueredCountries[worldFightCountryId]=true;
+      localStorage.setItem('ka_conquered',JSON.stringify(conqueredCountries));
+      updatePlanetStats();
+      worldFightCountryId=null;
+      showMsg('🏆 ȚARĂ CUCERITĂ! 🌍 Deschide Planeta pentru mai mult!','#ffd700');
+      return;
+    }
     const nextE=ENEMY_ROSTER.find(e=>e.minLvl>level);
     if(nextE){
       showMsg(`🔥 KEN CÂȘTIGĂ! Urmează ${nextE.emoji} ${nextE.name}!`,'#ffd700');
@@ -2379,6 +2436,231 @@ function earnCoins(){
   coins+=earned; saveShop(); updateCoinDisplay();
   impactTexts.push(new ImpactText(W/2,60,'+'+earned+' 💰 MONEDE!','#ffd700'));
 }
+
+// ══════════════════════════════════════════════════════
+//  PLANET / WORLD TOUR SYSTEM
+// ══════════════════════════════════════════════════════
+const GLOBE_R=170;
+let globeRotY=0.5, globeVelY=0.006;
+let globeDrag=false, globeDragX=0, globeStartRotY=0;
+let globeAnimId=null, selectedContinent=null;
+let conqueredCountries=JSON.parse(localStorage.getItem('ka_conquered')||'{}');
+let worldFightCountryId=null;
+
+const WORLD_COUNTRIES={
+  'Europa':{flag:'🌍',col:'#3399ff',colR:[70,160,70],tx1:.46,ty1:.09,tx2:.62,ty2:.32,
+    countries:[
+      {id:'ro',nm:'România',   flag:'🇷🇴',lv:[1,12]},
+      {id:'fr',nm:'Franța',    flag:'🇫🇷',lv:[13,24]},
+      {id:'de',nm:'Germania',  flag:'🇩🇪',lv:[25,36]},
+      {id:'es',nm:'Spania',    flag:'🇪🇸',lv:[37,48]},
+      {id:'it',nm:'Italia',    flag:'🇮🇹',lv:[49,60]},
+      {id:'uk',nm:'Marea Britanie',flag:'🇬🇧',lv:[61,72]},
+    ]},
+  'Asia':{flag:'🌏',col:'#ff9922',colR:[190,150,60],tx1:.55,ty1:.07,tx2:.92,ty2:.46,
+    countries:[
+      {id:'jp',nm:'Japonia',     flag:'🇯🇵',lv:[11,22]},
+      {id:'cn',nm:'China',       flag:'🇨🇳',lv:[23,36]},
+      {id:'in',nm:'India',       flag:'🇮🇳',lv:[37,50]},
+      {id:'kr',nm:'Coreea',      flag:'🇰🇷',lv:[51,65]},
+      {id:'sa',nm:'Arabia',      flag:'🇸🇦',lv:[66,80]},
+      {id:'th',nm:'Thailanda',   flag:'🇹🇭',lv:[81,100]},
+    ]},
+  'Africa':{flag:'🌍',col:'#ddaa22',colR:[210,180,70],tx1:.43,ty1:.28,tx2:.67,ty2:.72,
+    countries:[
+      {id:'ma',nm:'Maroc',         flag:'🇲🇦',lv:[16,26]},
+      {id:'eg',nm:'Egipt',         flag:'🇪🇬',lv:[27,38]},
+      {id:'ng',nm:'Nigeria',       flag:'🇳🇬',lv:[39,52]},
+      {id:'ke',nm:'Kenya',         flag:'🇰🇪',lv:[53,65]},
+      {id:'za',nm:'Africa de Sud', flag:'🇿🇦',lv:[66,80]},
+    ]},
+  'Am. Nord':{flag:'🌎',col:'#44bb44',colR:[100,185,90],tx1:.01,ty1:.07,tx2:.37,ty2:.43,
+    countries:[
+      {id:'mx',nm:'Mexic',  flag:'🇲🇽',lv:[11,25]},
+      {id:'ca',nm:'Canada', flag:'🇨🇦',lv:[26,40]},
+      {id:'us',nm:'SUA',    flag:'🇺🇸',lv:[41,60]},
+    ]},
+  'Am. Sud':{flag:'🌎',col:'#22cc77',colR:[50,195,110],tx1:.25,ty1:.41,tx2:.42,ty2:.82,
+    countries:[
+      {id:'co',nm:'Columbia',  flag:'🇨🇴',lv:[21,34]},
+      {id:'br',nm:'Brazilia',  flag:'🇧🇷',lv:[35,50]},
+      {id:'pe',nm:'Peru',      flag:'🇵🇪',lv:[51,65]},
+      {id:'ar',nm:'Argentina', flag:'🇦🇷',lv:[66,80]},
+    ]},
+  'Australia':{flag:'🌏',col:'#cc7733',colR:[210,130,60],tx1:.78,ty1:.54,tx2:.94,ty2:.77,
+    countries:[
+      {id:'au',nm:'Australia',    flag:'🦘',lv:[31,50]},
+      {id:'nz',nm:'Noua Zeelandă',flag:'🥝',lv:[51,65]},
+      {id:'ph',nm:'Filipine',     flag:'🇵🇭',lv:[66,80]},
+    ]},
+};
+
+function gwColor(tx,ty){
+  const C=[
+    {nm:'Europa',   tx1:.46,ty1:.09,tx2:.62,ty2:.32,r:70, g:160,b:70},
+    {nm:'Asia',     tx1:.55,ty1:.07,tx2:.92,ty2:.46,r:190,g:150,b:60},
+    {nm:'Africa',   tx1:.43,ty1:.28,tx2:.67,ty2:.72,r:210,g:180,b:70},
+    {nm:'Am. Nord', tx1:.01,ty1:.07,tx2:.37,ty2:.43,r:100,g:185,b:90},
+    {nm:'Am. Sud',  tx1:.25,ty1:.41,tx2:.42,ty2:.82,r:50, g:195,b:110},
+    {nm:'Australia',tx1:.78,ty1:.54,tx2:.94,ty2:.77,r:210,g:130,b:60},
+    {nm:'Antarctica',tx1:0, ty1:.87,tx2:1,  ty2:1,  r:225,g:238,b:255},
+  ];
+  for(const c of C){
+    if(tx>=c.tx1&&tx<=c.tx2&&ty>=c.ty1&&ty<=c.ty2){
+      const wc=WORLD_COUNTRIES[c.nm];
+      const allConq=wc&&wc.countries.every(cc=>conqueredCountries[cc.id]);
+      const sel=c.nm===selectedContinent;
+      if(allConq) return {r:220,g:190,b:30,nm:c.nm};
+      return {r:sel?Math.min(255,c.r+55):c.r, g:sel?Math.min(255,c.g+55):c.g, b:sel?Math.min(255,c.b+55):c.b, nm:c.nm};
+    }
+  }
+  return {r:18,g:70,b:185,nm:null};
+}
+
+const globeEl=document.getElementById('globeCanvas');
+const gctx=globeEl.getContext('2d');
+
+function renderGlobe(){
+  const r=GLOBE_R, step=2;
+  const iw=r*2/step, ih=r*2/step;
+  const img=gctx.createImageData(iw,ih);
+  const cosRY=Math.cos(globeRotY), sinRY=Math.sin(globeRotY);
+  const TILT=0.32, cosRX=Math.cos(TILT), sinRX=Math.sin(TILT);
+  for(let iy=0;iy<ih;iy++){
+    for(let ix=0;ix<iw;ix++){
+      const px=ix*step-r, py=iy*step-r;
+      const d2=px*px+py*py;
+      if(d2>=r*r) continue;
+      const pz=Math.sqrt(r*r-d2);
+      const nx0=px/r, ny0=py/r, nz0=pz/r;
+      const ny1=ny0*cosRX-nz0*sinRX;
+      const nz1=ny0*sinRX+nz0*cosRX;
+      const nx=nx0*cosRY+nz1*sinRY;
+      const nz=-nx0*sinRY+nz1*cosRY;
+      const ny=ny1;
+      const lon=Math.atan2(nx,nz);
+      const lat=Math.asin(Math.max(-1,Math.min(1,-ny)));
+      const tx=((lon/(Math.PI*2))+0.5+2)%1;
+      const ty=0.5-lat/Math.PI;
+      const col=gwColor(tx,ty);
+      const diff=Math.max(0.14, nx*0.35+ny*(-0.3)+nz*0.88);
+      const spec=Math.pow(Math.max(0,nx*0.2+ny*(-0.2)+nz*0.85),14)*0.55;
+      const i=(iy*iw+ix)*4;
+      img.data[i]  =Math.min(255,col.r*diff+spec*255);
+      img.data[i+1]=Math.min(255,col.g*diff+spec*255);
+      img.data[i+2]=Math.min(255,col.b*diff+spec*220);
+      img.data[i+3]=255;
+    }
+  }
+  const tmp=document.createElement('canvas');
+  tmp.width=iw; tmp.height=ih;
+  tmp.getContext('2d').putImageData(img,0,0);
+  gctx.clearRect(0,0,r*2,r*2);
+  gctx.imageSmoothingEnabled=true;
+  gctx.drawImage(tmp,0,0,iw,ih,0,0,r*2,r*2);
+  // atmosferă
+  const atm=gctx.createRadialGradient(r,r,r*.85,r,r,r*1.18);
+  atm.addColorStop(0,'rgba(70,130,255,0.5)');
+  atm.addColorStop(1,'rgba(0,20,160,0)');
+  gctx.fillStyle=atm;
+  gctx.beginPath();gctx.arc(r,r,r*1.18,0,Math.PI*2);gctx.fill();
+}
+
+function globeLoop(){
+  if(!document.getElementById('planetOverlay').classList.contains('open')) return;
+  if(!globeDrag){
+    globeRotY+=globeVelY;
+    if(Math.abs(globeVelY)<0.004) globeVelY=globeVelY>=0?0.005:-0.005;
+    globeVelY*=0.997;
+  }
+  renderGlobe();
+  globeAnimId=requestAnimationFrame(globeLoop);
+}
+
+// drag pe glob
+globeEl.addEventListener('mousedown',e=>{globeDrag=true;globeDragX=e.clientX;globeStartRotY=globeRotY;globeVelY=0;});
+window.addEventListener('mousemove',e=>{if(!globeDrag)return;const dx=e.clientX-globeDragX;globeVelY=(e.movementX||0)*0.007;globeRotY=globeStartRotY+dx*0.012;});
+window.addEventListener('mouseup',e=>{if(globeDrag){globeVelY=(e.clientX-globeDragX)*0.0025;globeDrag=false;}});
+
+// click pe continent
+globeEl.addEventListener('click',e=>{
+  const rect=globeEl.getBoundingClientRect();
+  const r=GLOBE_R;
+  const mx=e.clientX-rect.left-r, my=e.clientY-rect.top-r;
+  if(mx*mx+my*my>r*r) return;
+  const pz=Math.sqrt(r*r-mx*mx-my*my);
+  const nx0=mx/r, ny0=my/r, nz0=pz/r;
+  const TILT=0.32, cosRX=Math.cos(TILT), sinRX=Math.sin(TILT);
+  const ny1=ny0*cosRX-nz0*sinRX;
+  const nz1=ny0*sinRX+nz0*cosRX;
+  const cosRY=Math.cos(globeRotY), sinRY=Math.sin(globeRotY);
+  const nx=nx0*cosRY+nz1*sinRY;
+  const nz=-nx0*sinRY+nz1*cosRY;
+  const ny=ny1;
+  const lon=Math.atan2(nx,nz);
+  const lat=Math.asin(Math.max(-1,Math.min(1,-ny)));
+  const tx=((lon/(Math.PI*2))+0.5+2)%1;
+  const ty=0.5-lat/Math.PI;
+  const col=gwColor(tx,ty);
+  if(col.nm&&WORLD_COUNTRIES[col.nm]){
+    selectedContinent=col.nm;
+    renderContinentPanel();
+    renderGlobe();
+  }
+});
+
+function updatePlanetStats(){
+  const total=Object.values(WORLD_COUNTRIES).reduce((a,c)=>a+c.countries.length,0);
+  const conq=Object.keys(conqueredCountries).filter(k=>conqueredCountries[k]).length;
+  document.getElementById('planetStats').textContent='🏆 '+conq+' / '+total+' țări cucerite';
+}
+
+function renderContinentPanel(){
+  const panel=document.getElementById('continentPanel');
+  if(!selectedContinent||!WORLD_COUNTRIES[selectedContinent]){
+    panel.innerHTML='<div id="globeNoSelect">🌍 Click pe un continent<br>pentru a vedea țările<br>și a lupta!</div>';
+    return;
+  }
+  const cont=WORLD_COUNTRIES[selectedContinent];
+  const conqN=cont.countries.filter(c=>conqueredCountries[c.id]).length;
+  let html=`<div id="contTitle">${cont.flag} ${selectedContinent} <span style="font-size:12px;color:#557">${conqN}/${cont.countries.length}</span></div>`;
+  cont.countries.forEach(c=>{
+    const done=!!conqueredCountries[c.id];
+    html+=`<div class="pCountry ${done?'pConq':''}">
+      <span class="pFlag">${c.flag}</span>
+      <div class="pInfo"><div class="pNm">${c.nm}</div><div class="pLv">Nivel ${c.lv[0]}–${c.lv[1]}</div></div>
+      ${done?'<span class="pConqBadge">🏆 CAMPION</span>':'<button class="fightBtn" data-id="'+c.id+'" data-lv="'+c.lv[0]+'">⚔ LUPTĂ</button>'}
+    </div>`;
+  });
+  const allConq=cont.countries.every(c=>conqueredCountries[c.id]);
+  if(allConq) html+='<div id="contAllConq">🌟 CONTINENT CUCERIT! 🌟</div>';
+  panel.innerHTML=html;
+  panel.querySelectorAll('.fightBtn').forEach(btn=>{
+    btn.addEventListener('click',()=>startWorldFight(btn.dataset.id,parseInt(btn.dataset.lv)));
+  });
+}
+
+function openPlanet(){
+  document.getElementById('planetOverlay').classList.add('open');
+  updatePlanetStats();
+  renderContinentPanel();
+  cancelAnimationFrame(globeAnimId);
+  globeLoop();
+}
+function closePlanet(){
+  document.getElementById('planetOverlay').classList.remove('open');
+  cancelAnimationFrame(globeAnimId);
+}
+
+function startWorldFight(countryId,lvl){
+  worldFightCountryId=countryId;
+  closePlanet();
+  document.getElementById('levelInput').value=lvl;
+  startGame();
+}
+
+document.getElementById('planetBtn').addEventListener('click',openPlanet);
+document.getElementById('closePlanetBtn').addEventListener('click',closePlanet);
 
 // ── Menu screen pe canvas ────────────────────────────
 function drawMenuScreen(){
