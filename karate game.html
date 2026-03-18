@@ -1722,22 +1722,67 @@ class AICtrl{
 //  BACKGROUND (static layer)
 // ══════════════════════════════════════════════════════
 const bgCanvas=document.createElement('canvas');bgCanvas.width=W;bgCanvas.height=H;
-(function(){
+let currentArenaId='default';
+
+const ARENAS={
+  default:  {sky:['#1a0a2e','#3d1570'],floor:['#8b4f18','#4a2510'],barrier:'#6b0000',lines:'rgba(255,215,0,.06)',accent:'rgba(255,215,0,.35)',label:'🥋 DOJO',lc:'#ffd700'},
+  'Europa': {sky:['#0d1625','#1a2e50'],floor:['#44446a','#22223a'],barrier:'#223366',lines:'rgba(130,170,255,.08)',accent:'rgba(100,160,255,.4)',label:'🏰 CASTEL MEDIEVAL',lc:'#88aaff'},
+  'Asia':   {sky:['#180808','#3d0a14'],floor:['#7a1a08','#3d0a04'],barrier:'#880808',lines:'rgba(255,90,50,.08)', accent:'rgba(255,80,50,.45)', label:'🌸 DOJO JAPONEZ',lc:'#ff8866'},
+  'Africa': {sky:['#1e1000','#3d2200'],floor:['#b87820','#6a4408'],barrier:'#774400',lines:'rgba(255,180,50,.1)', accent:'rgba(255,190,50,.45)',label:'🏜 DEȘERT SAHARA',lc:'#ffcc44'},
+  'Am. Nord':{sky:['#060610','#0e1520'],floor:['#151a25','#080c12'],barrier:'#0a1630',lines:'rgba(0,200,255,.07)',accent:'rgba(0,210,255,.45)',label:'🌆 METROPOLĂ NYC',lc:'#00ddff'},
+  'Am. Sud':{sky:['#061006','#102010'],floor:['#246018','#103008'],barrier:'#1a5500',lines:'rgba(80,220,80,.08)', accent:'rgba(60,220,60,.45)', label:'🌿 JUNGLĂ AMAZON',lc:'#44ff66'},
+  'Australia':{sky:['#001820','#003040'],floor:['#106070','#084038'],barrier:'#005566',lines:'rgba(0,210,220,.08)',accent:'rgba(0,220,230,.4)', label:'🏄 PLAJĂ SYDNEY',lc:'#00eeff'},
+};
+
+function buildArena(id){
+  const a=ARENAS[id]||ARENAS.default;
   const bc=bgCanvas.getContext('2d');
-  const sky=bc.createLinearGradient(0,0,0,GROUND+20);sky.addColorStop(0,'#1a0a2e');sky.addColorStop(1,'#3d1570');bc.fillStyle=sky;bc.fillRect(0,0,W,H);
-  bc.strokeStyle='rgba(255,215,0,.06)';bc.lineWidth=1;
+  bc.clearRect(0,0,W,H);
+  // cer
+  const sky=bc.createLinearGradient(0,0,0,GROUND+20);sky.addColorStop(0,a.sky[0]);sky.addColorStop(1,a.sky[1]);bc.fillStyle=sky;bc.fillRect(0,0,W,H);
+  // grilă
+  bc.strokeStyle=a.lines;bc.lineWidth=1;
   for(let x=0;x<W;x+=50){bc.beginPath();bc.moveTo(x,0);bc.lineTo(x,GROUND);bc.stroke();}
   for(let y=0;y<GROUND;y+=50){bc.beginPath();bc.moveTo(0,y);bc.lineTo(W,y);bc.stroke();}
-  // crowd barrier
-  bc.fillStyle='#6b0000';bc.fillRect(0,GROUND-46,W,12);
-  const bg=bc.createLinearGradient(0,GROUND-46,0,GROUND-34);bg.addColorStop(0,'rgba(255,100,100,.25)');bg.addColorStop(1,'transparent');bc.fillStyle=bg;bc.fillRect(0,GROUND-46,W,12);
-  // tatami floor
-  const fl=bc.createLinearGradient(0,GROUND,0,H);fl.addColorStop(0,'#8b4f18');fl.addColorStop(1,'#4a2510');bc.fillStyle=fl;bc.fillRect(0,GROUND,W,H-GROUND);
-  bc.strokeStyle='rgba(0,0,0,.2)';bc.lineWidth=1;
+  // elemente decorative unice per arenă
+  if(id==='Europa'){
+    // turnuri medievale
+    [[80,GROUND-110],[W-80,GROUND-110]].forEach(([tx,ty])=>{bc.fillStyle='#1a2a4a';bc.fillRect(tx-18,ty,36,110);bc.fillStyle='#223366';for(let i=0;i<4;i++)bc.fillRect(tx-20+i*12,ty-14,9,16);});
+  } else if(id==='Asia'){
+    // pagodă în fundal
+    bc.fillStyle='rgba(180,30,20,.3)';bc.beginPath();bc.moveTo(W/2-60,GROUND-80);bc.lineTo(W/2+60,GROUND-80);bc.lineTo(W/2+45,GROUND-100);bc.lineTo(W/2-45,GROUND-100);bc.closePath();bc.fill();
+    bc.beginPath();bc.moveTo(W/2-40,GROUND-100);bc.lineTo(W/2+40,GROUND-100);bc.lineTo(W/2+28,GROUND-118);bc.lineTo(W/2-28,GROUND-118);bc.closePath();bc.fill();
+    // petale cireș
+    for(let i=0;i<12;i++){bc.fillStyle='rgba(255,150,180,.25)';bc.beginPath();bc.arc(80+Math.sin(i*1.2)*120,GROUND-60+Math.cos(i*0.9)*80,5+Math.random()*4,0,Math.PI*2);bc.fill();}
+  } else if(id==='Africa'){
+    // dune
+    bc.fillStyle='rgba(160,100,20,.3)';bc.beginPath();bc.moveTo(0,GROUND-10);for(let x=0;x<=W;x+=40)bc.lineTo(x,GROUND-30-Math.sin(x*.015)*25);bc.lineTo(W,H);bc.lineTo(0,H);bc.closePath();bc.fill();
+    // soare
+    const sg=bc.createRadialGradient(W/2,30,5,W/2,30,80);sg.addColorStop(0,'rgba(255,200,50,.35)');sg.addColorStop(1,'transparent');bc.fillStyle=sg;bc.beginPath();bc.arc(W/2,30,80,0,Math.PI*2);bc.fill();
+  } else if(id==='Am. Nord'){
+    // skyline oraș
+    [[50,90],[130,70],[200,100],[280,60],[360,85],[470,65],[550,90],[640,75],[730,95]].forEach(([bx,bh])=>{bc.fillStyle='rgba(10,30,60,.7)';bc.fillRect(bx,GROUND-bh,35,bh);for(let wy=GROUND-bh+8;wy<GROUND-10;wy+=14)for(let wx=bx+4;wx<bx+30;wx+=10){bc.fillStyle=Math.random()>.4?'rgba(255,240,150,.4)':'rgba(0,200,255,.25)';bc.fillRect(wx,wy,6,8);}});
+  } else if(id==='Am. Sud'){
+    // copaci jungla
+    [[60,GROUND-80],[160,GROUND-100],[660,GROUND-90],[750,GROUND-110]].forEach(([tx,ty])=>{bc.fillStyle='rgba(20,80,20,.6)';bc.beginPath();bc.arc(tx,ty,35,0,Math.PI*2);bc.fill();bc.fillStyle='rgba(20,60,15,.7)';bc.beginPath();bc.arc(tx-10,ty+15,28,0,Math.PI*2);bc.fill();bc.fillStyle='rgba(20,40,10,.8)';bc.fillRect(tx-4,ty+28,8,55);});
+  } else if(id==='Australia'){
+    // valuri ocean
+    for(let w=0;w<3;w++){bc.strokeStyle=`rgba(0,180,200,${.12-w*.03})`;bc.lineWidth=4-w;bc.beginPath();bc.moveTo(0,GROUND-20-w*12);for(let x=0;x<W;x+=30)bc.lineTo(x,GROUND-20-w*12+Math.sin(x*.04+w)*8);bc.stroke();}
+  }
+  // barieră mulțime
+  bc.fillStyle=a.barrier;bc.fillRect(0,GROUND-46,W,12);
+  const bg2=bc.createLinearGradient(0,GROUND-46,0,GROUND-34);bg2.addColorStop(0,'rgba(255,255,255,.1)');bg2.addColorStop(1,'transparent');bc.fillStyle=bg2;bc.fillRect(0,GROUND-46,W,12);
+  // podea
+  const fl=bc.createLinearGradient(0,GROUND,0,H);fl.addColorStop(0,a.floor[0]);fl.addColorStop(1,a.floor[1]);bc.fillStyle=fl;bc.fillRect(0,GROUND,W,H-GROUND);
+  bc.strokeStyle='rgba(0,0,0,.22)';bc.lineWidth=1;
   for(let x=0;x<W;x+=82){bc.beginPath();bc.moveTo(x,GROUND);bc.lineTo(x,H);bc.stroke();}
   for(let y=GROUND;y<H;y+=41){bc.beginPath();bc.moveTo(0,y);bc.lineTo(W,y);bc.stroke();}
-  bc.setLineDash([10,10]);bc.strokeStyle='rgba(255,215,0,.35)';bc.lineWidth=2;bc.beginPath();bc.moveTo(W/2,GROUND);bc.lineTo(W/2,H);bc.stroke();bc.setLineDash([]);
-})();
+  // linie centrală
+  bc.setLineDash([10,10]);bc.strokeStyle=a.accent;bc.lineWidth=2;bc.beginPath();bc.moveTo(W/2,GROUND);bc.lineTo(W/2,H);bc.stroke();bc.setLineDash([]);
+  // etichetă arenă
+  bc.font='bold 12px Arial';bc.fillStyle=a.lc;bc.globalAlpha=.45;bc.textAlign='center';bc.fillText(a.label,W/2,GROUND-52);bc.globalAlpha=1;bc.textAlign='left';
+}
+buildArena('default');
 
 function drawTorches(){
   [60,W-60].forEach(tx=>{
@@ -2246,6 +2291,7 @@ function startGame(){
   document.getElementById('aiLabel').textContent=currentEnemy.emoji+' '+currentEnemy.name;
   cancelAnimationFrame(rafId);hideMsg();
   projectiles=[];clashEffects=[];particles.length=0;impactTexts.length=0;shake=0;flashAlpha=0;
+  buildArena(currentArenaId);
   pickups.length=0;pickupTimer=0;
   bombs.length=0;bombStock=5;bombCooldown=0;
   targetState=0;targetTimer=0;targetCooldown=0;
@@ -2258,7 +2304,7 @@ function startGame(){
   applyShopEffects();
   gameOn=true;requestAnimationFrame(loop);
 }
-document.getElementById('startBtn').addEventListener('click',startGame);
+document.getElementById('startBtn').addEventListener('click',()=>{currentArenaId='default';startGame();});
 
 // ══════════════════════════════════════════════════════
 //  SHOP SYSTEM
@@ -2381,7 +2427,7 @@ function applyShopEffects(){
     if(eKey==='aim_range')   shopAimRange=Math.max(shopAimRange,v);
     if(eKey==='aim_nocd')    shopAimNoCd=true;
     if(eKey==='berserk_start')player.berserkerTimer=300;
-    if(eKey==='freeze_enemy')aiFighter.frozenTimer=v;
+    // freeze_enemy la start eliminat — nu mai îngheță la început
     if(eKey==='dmg_mult')    shopDmgMult=Math.max(shopDmgMult,v);
     if(eKey==='spell_dmg')   spellDmgMult=Math.max(spellDmgMult,v);
     if(eKey==='dmg_red')     shopDmgReduction=Math.max(shopDmgReduction,v);
@@ -2654,6 +2700,7 @@ function closePlanet(){
 
 function startWorldFight(countryId,lvl){
   worldFightCountryId=countryId;
+  currentArenaId=selectedContinent||'default';
   closePlanet();
   document.getElementById('levelInput').value=lvl;
   startGame();
