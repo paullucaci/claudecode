@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ro">
 <head>
   <meta charset="UTF-8">
@@ -3925,7 +3925,7 @@ drawMenuScreen();
 const advC=document.getElementById('adventureCanvas');
 const advCtx=advC.getContext('2d');
 const AW=820,AH=520;
-const GROUND=AH-90;
+const ADV_GROUND=AH-90;
 
 // ── WORLD STATE ──
 let advAnimId=null,advPaused=false;
@@ -3945,7 +3945,7 @@ const ZONES=[
 
 // ── PLAYER ──
 let pl={
-  x:200,y:GROUND,vx:0,vy:0,
+  x:200,y:ADV_GROUND,vx:0,vy:0,
   hp:100,maxHp:100,
   face:1,  // 1=right, -1=left
   state:'idle', // idle,run,jump,attack,kick,hadouken,defend,hurt,dead
@@ -3998,7 +3998,7 @@ function spawnMonster(forced){
   const mt={...pool[Math.floor(Math.random()*pool.length)]};
   const fromRight=Math.random()>.3;
   const sx=fromRight?AW+100+Math.random()*200:-100-Math.random()*100;
-  const sy=mt.fly?GROUND-80-Math.random()*120:GROUND;
+  const sy=mt.fly?ADV_GROUND-80-Math.random()*120:ADV_GROUND;
   advMonsters.push({
     ...mt,
     x:sx, y:sy,
@@ -4019,7 +4019,7 @@ function spawnVillage(){
   const names=['Sat Luminos','Cătunul Fericit','Cetatea Nopții','Poiana Misterioasă','Satul Legendelor','Citadela Stacojie','Orășelul Fermecat'];
   advVillages.push({
     x:AW+300+Math.random()*400,
-    y:GROUND,
+    y:ADV_GROUND,
     name:names[Math.floor(Math.random()*names.length)],
     hp:100,maxHp:100,
     defended:false,
@@ -4068,21 +4068,21 @@ function drawAdvBg(){
   const treeCol=advZone===2?'#885522':advZone===3?'#99bbcc':advZone===4?'#5522aa':'#224411';
   for(let tx=-sx1;tx<AW+130;tx+=120){
     if(advZone===0||advZone===4){// trees
-      advCtx.fillStyle=treeCol;advCtx.fillRect(tx+8,GROUND-70,12,70);
-      advCtx.beginPath();advCtx.moveTo(tx-14,GROUND-70);advCtx.lineTo(tx+14,GROUND-130);advCtx.lineTo(tx+42,GROUND-70);advCtx.closePath();advCtx.fill();
+      advCtx.fillStyle=treeCol;advCtx.fillRect(tx+8,ADV_GROUND-70,12,70);
+      advCtx.beginPath();advCtx.moveTo(tx-14,ADV_GROUND-70);advCtx.lineTo(tx+14,ADV_GROUND-130);advCtx.lineTo(tx+42,ADV_GROUND-70);advCtx.closePath();advCtx.fill();
     } else if(advZone===1){// rocks
-      advCtx.fillStyle=treeCol;advCtx.beginPath();advCtx.ellipse(tx+20,GROUND-30,30,28,0,0,Math.PI*2);advCtx.fill();
+      advCtx.fillStyle=treeCol;advCtx.beginPath();advCtx.ellipse(tx+20,ADV_GROUND-30,30,28,0,0,Math.PI*2);advCtx.fill();
     } else if(advZone===2){// cactus
-      advCtx.fillStyle=treeCol;advCtx.fillRect(tx+16,GROUND-60,10,60);advCtx.fillRect(tx+6,GROUND-42,10,14);advCtx.fillRect(tx+26,GROUND-38,10,12);
+      advCtx.fillStyle=treeCol;advCtx.fillRect(tx+16,ADV_GROUND-60,10,60);advCtx.fillRect(tx+6,ADV_GROUND-42,10,14);advCtx.fillRect(tx+26,ADV_GROUND-38,10,12);
     } else {// ice spires
-      advCtx.fillStyle=treeCol;advCtx.beginPath();advCtx.moveTo(tx+10,GROUND);advCtx.lineTo(tx+18,GROUND-65);advCtx.lineTo(tx+26,GROUND);advCtx.fill();
+      advCtx.fillStyle=treeCol;advCtx.beginPath();advCtx.moveTo(tx+10,ADV_GROUND);advCtx.lineTo(tx+18,ADV_GROUND-65);advCtx.lineTo(tx+26,ADV_GROUND);advCtx.fill();
     }
   }
-  // ground
-  const gg=advCtx.createLinearGradient(0,GROUND,0,AH);gg.addColorStop(0,z.ground1);gg.addColorStop(1,z.ground2);
-  advCtx.fillStyle=gg;advCtx.fillRect(0,GROUND,AW,AH-GROUND);
-  // ground detail line
-  advCtx.strokeStyle='rgba(0,0,0,.3)';advCtx.lineWidth=2;advCtx.beginPath();advCtx.moveTo(0,GROUND);advCtx.lineTo(AW,GROUND);advCtx.stroke();
+  // ADV_GROUND
+  const gg=advCtx.createLinearGradient(0,ADV_GROUND,0,AH);gg.addColorStop(0,z.ground1);gg.addColorStop(1,z.ground2);
+  advCtx.fillStyle=gg;advCtx.fillRect(0,ADV_GROUND,AW,AH-ADV_GROUND);
+  // ADV_GROUND detail line
+  advCtx.strokeStyle='rgba(0,0,0,.3)';advCtx.lineWidth=2;advCtx.beginPath();advCtx.moveTo(0,ADV_GROUND);advCtx.lineTo(AW,ADV_GROUND);advCtx.stroke();
   // fog overlay
   advCtx.fillStyle=z.fog;advCtx.fillRect(0,0,AW,AH);
   // zone name top center
@@ -4101,7 +4101,7 @@ function drawAdvPlayer(){
   // invuln flicker
   if(p.invuln>0&&Math.floor(p.invuln/4)%2===0){advCtx.globalAlpha=.4;}
   // shadow
-  advCtx.fillStyle='rgba(0,0,0,.2)';advCtx.beginPath();advCtx.ellipse(p.x,GROUND+4,20,7,0,0,Math.PI*2);advCtx.fill();
+  advCtx.fillStyle='rgba(0,0,0,.2)';advCtx.beginPath();advCtx.ellipse(p.x,ADV_GROUND+4,20,7,0,0,Math.PI*2);advCtx.fill();
   // use sKen-style but smaller (scale .7) — redirect sctx→advCtx temporarily
   advCtx.translate(p.x,y);advCtx.scale(.7,.7);
   const _prevSctx=sctx; sctx=advCtx;
@@ -4127,7 +4127,7 @@ function drawAdvMonster(m){
   if(m.face===-1){advCtx.translate(x*2,0);advCtx.scale(-1,1);}
   const bob=Math.sin(t*.12)*3;
   // shadow
-  advCtx.fillStyle='rgba(0,0,0,.25)';advCtx.beginPath();advCtx.ellipse(x,GROUND+4,m.w*.4,6,0,0,Math.PI*2);advCtx.fill();
+  advCtx.fillStyle='rgba(0,0,0,.25)';advCtx.beginPath();advCtx.ellipse(x,ADV_GROUND+4,m.w*.4,6,0,0,Math.PI*2);advCtx.fill();
   if(m.id==='goblin'){
     // small, sneaky, green
     advCtx.fillStyle=m.col;advCtx.strokeStyle='#111';advCtx.lineWidth=2;
@@ -4464,7 +4464,7 @@ function advUpdate(){
   // apply velocity
   pl.x=Math.max(40,Math.min(AW-40,pl.x+pl.vx));
   pl.y+=pl.vy;pl.vy+=0.55;
-  if(pl.y>=GROUND){pl.y=GROUND;pl.vy=0;pl.onGround=true;if(pl.state==='jump')pl.state='idle';}
+  if(pl.y>=ADV_GROUND){pl.y=ADV_GROUND;pl.vy=0;pl.onGround=true;if(pl.state==='jump')pl.state='idle';}
   if(pl.invuln>0)pl.invuln--;
   if(pl.hadoukenCd>0)pl.hadoukenCd--;
   if(pl.comboT>0)pl.comboT--;else if(pl.comboT<=0)pl.combo=0;
@@ -4493,8 +4493,8 @@ function advUpdate(){
     // AI: walk toward player
     if(m.state==='walk'){
       m.vx=(dx/dist)*m.spd;
-      if(!m.fly){m.y=GROUND;}
-      else{m.y+=dy>0?1:-1;m.y=Math.max(GROUND-120,Math.min(GROUND,m.y));}
+      if(!m.fly){m.y=ADV_GROUND;}
+      else{m.y+=dy>0?1:-1;m.y=Math.max(ADV_GROUND-120,Math.min(ADV_GROUND,m.y));}
     }
     // attack if close
     if(dist<(m.big?90:55)&&m.attackCd<=0){
@@ -4554,7 +4554,7 @@ function advUpdate(){
         for(let wi=0;wi<2+v.wave;wi++){
           const mt2={...MTYPES[Math.floor(Math.random()*(v.wave>2?MTYPES.length:4))]};
           const side=Math.random()>.5?1:-1;
-          advMonsters.push({...mt2,x:v.x+side*(300+Math.random()*200),y:GROUND,t:0,face:-side,state:'walk',stateT:0,attackCd:0,hurtT:0,dead:false,deathT:0,id2:Math.random(),targetVillage:v,hp:mt2.hp*(1+advZone*.1)|0,maxHp:mt2.hp*(1+advZone*.1)|0});
+          advMonsters.push({...mt2,x:v.x+side*(300+Math.random()*200),y:ADV_GROUND,t:0,face:-side,state:'walk',stateT:0,attackCd:0,hurtT:0,dead:false,deathT:0,id2:Math.random(),targetVillage:v,hp:mt2.hp*(1+advZone*.1)|0,maxHp:mt2.hp*(1+advZone*.1)|0});
         }
         v.wave++;v.waveTimer=180;
         if(v.wave<=v.maxWave){advMsg='⚔️ Val '+v.wave+'/'+v.maxWave+'!';advMsgT=120;}
@@ -4614,7 +4614,7 @@ function advLoop(){
 
 function openAdventure(){
   // reset state
-  pl.hp=100;pl.state='idle';pl.x=200;pl.y=GROUND;pl.vx=0;pl.vy=0;pl.combo=0;pl.score=0;
+  pl.hp=100;pl.state='idle';pl.x=200;pl.y=ADV_GROUND;pl.vx=0;pl.vy=0;pl.combo=0;pl.score=0;
   advMonsters=[];advProjectiles=[];advParticles2=[];advVillages=[];
   advScrollX=0;advZone=0;advZoneTimer=ZONE_W;advWaveTimer=120;advVillageTimer=500;advScore=0;advPaused=false;
   for(let i=0;i<3;i++)spawnMonster();
